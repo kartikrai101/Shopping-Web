@@ -62,6 +62,12 @@ const productSchema = mongoose.Schema({
         }
     ],
 
+    user: {  // so that we can give a particular role to each and every user
+        type: mongoose.Schema.ObjectId,
+        ref: "User",
+        required: true
+    },
+
     createdAt: {
         type: Date,
         default: Date.now

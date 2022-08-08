@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const validator = require('validator'); // importing validator for email id validation
 const bcrypt = require('bcryptjs'); // for encrypting the user's password before saving to db
 const jwt = require('jsonwebtoken'); // for generating tokens to store in cookies
+const crypto = require('crypto'); // for generating tokens for forgot password feature. Also, this is a built-in package, so we did not have to install it
 
 const userSchema = new mongoose.Schema({
     name: {
@@ -64,5 +65,23 @@ userSchema.methods.getJWTToken = function(){
 userSchema.methods.comparePassword = async function(enteredPassword){
     return await bcrypt.compare(enteredPassword, this.password);
 };
+
+//Generating Password Reset Token
+userSchema.methods.getResetPasswordToken = async function(){
+
+    // Generating Token
+    const resetToken = crypto.randomBytes(20).toString("hex"); // this will create a hash string for the token
+
+
+    // Hashing and add resetPasswordToken to userSchema
+    this.resetPasswordToken = crypto
+        .createHash("sha256")
+        .update(resetToken)
+        .digest("hex");
+
+    this.resetPasswordExpire = Date.now() + 15 * 60 * 1000; // setting up an expiration time to the temporary password token that the user can use
+
+    return resetToken;
+}
 
 module.exports = mongoose.model("User", userSchema);  // remember that the model's name must begin with an uppercase letter and it should not have any breaks

@@ -10,6 +10,15 @@ const ApiFeatures = require('../utils/apiFeatures');
 
 exports.createProduct = catchAsyncErrors (async (req, res, next) => { // see that we are exporting this function that simply creates a product by taking in the request body from the request that was made to this 
 
+    req.body.user = req.user.id; // basically when a user logs in or registers, they get a user id, now when a user is trying to add a product we need to give that user a role of that admin,so basically we are assigning every created product with a user id that belongs to the user who created/added that product. This way we can later make sure that only this user gets to edit/delete the product information
+
+    // now you also need to keep in mind that we already have the value of req.user
+    // because this is the third middleware that is hit for this route, because before
+    // this middleware, the middlewares isAuthenticated and authorizeRoles have already been
+    //executed and therefore we have the value of req.user from the 1st middleware where we
+    // extracted it.
+
+
     const product = await Product.create(req.body); // creating a product based on the model that we imported from the productModel.js file
 
     res.status(201).json({
