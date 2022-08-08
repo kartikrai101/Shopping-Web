@@ -61,9 +61,10 @@ userSchema.methods.getJWTToken = function(){
 };
 
 
-// making a compare function to check if the entered password is correct of not
+// making a compare function to check if the entered password is correct or not
 userSchema.methods.comparePassword = async function(enteredPassword){
-    return await bcrypt.compare(enteredPassword, this.password);
+    console.log(this.password);
+    return (await bcrypt.compare(enteredPassword, this.password));
 };
 
 //Generating Password Reset Token

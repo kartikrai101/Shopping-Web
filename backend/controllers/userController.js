@@ -4,6 +4,7 @@ const User = require('../models/userModel'); // importing the user model
 const sendToken = require('../utils/jwtTokens'); // importing the sendToken function so that we can directly send some data to this function and get the token stored in cookie and the token info in return 
 const sendEmail = require('../utils/sendEmail.js'); // importing the sendEmail function to send the password reset email to the user
 const crypto = require('crypto'); // for hashing the token incoming via reset password link clicked by the user
+const { findOne, findById } = require('../models/userModel');
 
 // Register a user
 exports.registerUser = catchAsyncErrors( async (req, res, next) => {
@@ -45,7 +46,7 @@ exports.loginUser = catchAsyncErrors( async(req, res, next) => {
         return next(new ErrorHandler("Invalid Email or Password", 401))
     }
 
-    const isPasswordMatched = user.comparePassword(password); // we have created this function in the user model so that we can compare the password entered by the user with the encrypted password that we have stored for every user in our database
+    const isPasswordMatched = await user.comparePassword(password); // we have created this function in the user model so that we can compare the password entered by the user with the encrypted password that we have stored for every user in our database
 
     if(!isPasswordMatched){
         return next(new ErrorHandler("Invalid Email or Password", 401));
@@ -160,6 +161,115 @@ exports.getUserDetails = catchAsyncErrors( async(req, res, next) => {
     res.status(200).json({
         success: true,
         user,
+    })
+
+});
+
+// update user password
+exports.updatePassword = catchAsyncErrors( async(req, res, next) => {
+    const user = await User.findById(req.user.id).select("+password"); // remember that whenever you want to get the password field as well, you need to use this "+password"
+
+    const isPasswordMatched = await user.comparePassword(req.body.oldPassword); // remember that comparePassword is a function that built in the userModel itself
+
+    if(!isPasswordMatched){
+        return next( new ErrorHandler("Invalid Old Password", 401));
+    }
+
+    if(req.body.newPassword !== req.body.confirmPassword){
+        return next( new ErrorHandler("Password does not match", 400));
+    }
+
+    user.password = req.body.newPassword;
+
+    await user.save();
+
+    sendToken(user, 200, res); //doing this will automatically generate a token, save that token in cookies and respond with the generated token and the user information
+});
+
+
+// update user profile
+exports.updateUserProfile = catchAsyncErrors( async(req, res, next) => {
+    
+    const newUserData = {
+        name: req.body.name,
+        email: req.body.email
+    } 
+    //we will add cloudinary later
+
+    const user = await User.findByIdAndUpdate(req.user.id, newUserData, {
+        runValidators: true,
+        new: true,
+        useFindAndModify: false,
+    }); 
+
+    res.status(200).json({
+        success: true,
+    });
+});
+
+
+// Get all users (--Admin)
+exports.getAllUsers = catchAsyncErrors( async (req, res, next) => {
+    const users = await User.find();
+
+    res.status(200).json({
+        success: true,
+        users
+    });
+});
+
+// Get Single user (--Admin)
+exports.getSingleUser = catchAsyncErrors( async(req, res, next) => {
+    const user = await User.findById(req.params.id);
+
+    if(!user){
+        return next( new ErrorHandler("User not found!", 400));
+    }
+
+    res.status(200).json({
+        success: true,
+        user
+    })
+});
+
+
+// update user role (--Admin)
+exports.updateUserRole = catchAsyncErrors( async(req, res, next) => {
+    
+    const newUserData = {
+        name: req.body.name,
+        email: req.body.email,
+        role: req.body.role
+    } 
+    //we will add cloudinary later
+
+    const user = await User.findByIdAndUpdate(req.params.id, newUserData, {
+        runValidators: true,
+        new: true,
+        useFindAndModify: false,
+    }); 
+
+    res.status(200).json({
+        success: true,
+    });
+});
+
+// Delete a User (--Admin)
+
+exports.deleteUser = catchAsyncErrors( async (req, res, next) => {
+    
+    const user = await User.findById(req.params.id);
+    // we will remove cloudinary later
+
+    if(!user){
+        return next( new ErrorHandler("User not found", 400));
+    }
+
+    await user.remove(); // removing the user that we found
+
+    res.status(200).json({
+        success: true,
+        message: "User deleted Successfully!"
     })
 
 });
