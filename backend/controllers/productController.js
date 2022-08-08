@@ -1,5 +1,6 @@
 // in the controller functions we simply write the function that we want to run when a 
 // request hits a particular route in the routes folder
+<<<<<<< HEAD
 const { findByIdAndUpdate } = require('../models/productModel');
 const Product = require('../models/productModel'); // impoting the product model that we made in the models folder
 const ErrorHandler = require('../utils/errorHandler');
@@ -108,3 +109,10 @@ exports.getProductDetails = catchAsyncErrors( async (req, res, next) => {
         product
     })
 });
+=======
+
+exports.getAllProducts = (req, res) => {
+    res.status(200).json({message: "This route is working fine!"})
+};
+//
+>>>>>>> beab038e6e40d39546b45af4d0b76a23722a830b
