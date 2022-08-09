@@ -1,6 +1,5 @@
 // in the controller functions we simply write the function that we want to run when a 
 // request hits a particular route in the routes folder
-<<<<<<< HEAD
 const { findByIdAndUpdate } = require('../models/productModel');
 const Product = require('../models/productModel'); // impoting the product model that we made in the models folder
 const ErrorHandler = require('../utils/errorHandler');
@@ -109,10 +108,98 @@ exports.getProductDetails = catchAsyncErrors( async (req, res, next) => {
         product
     })
 });
-=======
 
-exports.getAllProducts = (req, res) => {
-    res.status(200).json({message: "This route is working fine!"})
-};
-//
->>>>>>> beab038e6e40d39546b45af4d0b76a23722a830b
+// Create New Review or Update the review
+exports.createProductReview = catchAsyncErrors( async (req, res, next) => {
+    const {rating, comment, productId} = req.body;
+
+    const review = {
+        user: req.user._id,
+        name: req.user.name,
+        rating: Number(rating),
+        comment,
+    };
+
+    const product = await Product.findById(productId); // getting the product for which the review is being given
+
+    const isReviewed = product.reviews.find(rev => rev.user.toString() === req.user._id);
+
+    if(isReviewed){
+        product.reviews.forEach((rev) => {
+            if(rev.user.toString() === req.user._id){
+                rev.rating = rating;
+                rev.comment = comment;
+            }
+        })
+        
+    }
+    else{
+        product.reviews.push(review); // simply push this review in the reviews array of the product
+        product.numOfReviews = product.reviews.length;
+    }
+    let avg = 0;
+    const sum = product.reviews.forEach(rev => {
+        avg += rev.rating;
+    });
+
+    product.ratings = avg/(product.reviews.length);
+    await product.save({validateBeforeSave: false});
+
+    res.status(200).json({
+        success: true,
+    });
+
+});
+
+
+// Get all reviews of a product
+exports.getProductReviews = catchAsyncErrors( async (req, res, next) => {
+    const product = await Product.findById(req.query.id);
+
+    if(!product){
+        return next( new ErrorHandler( "Product not found", 400 ));
+    }
+
+    res.status(200).json({
+        success: true,
+        reviews: product.reviews,
+    })
+});
+
+
+// Delete Review
+exports.deleteReview = catchAsyncErrors( async (req, res, next) => {
+    const product = await Product.findById(req.query.productId);
+
+    if(!product){
+        return next( new ErrorHandler( "Product not found", 400 ));
+    }
+
+    const reviews = product.reviews.filter(
+        (rev) => rev._id.toString() !== req.query.id.toString()
+    ); // basically we are constructing an array that has all the reviews of the product except the one that we want to delete
+    
+    let avg = 0;
+    const sum = reviews.forEach(rev => {
+        avg += rev.rating;
+    });
+
+    const ratings = avg/(reviews.length);
+    const numOfReviews = reviews.length;
+
+    await Product.findByIdAndUpdate(req.query.productId, {
+        reviews,
+        ratings,
+        numOfReviews,
+    },
+    {
+        new: true,
+        runValidators: true,
+        useFindAndModify: false,
+    }); // updating the product's reviews stats after one review has been deleted
+
+    res.status(200).json({
+        success: true,
+        message: "Review Deleted Successfully!",
+    })
+});

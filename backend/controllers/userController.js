@@ -5,6 +5,7 @@ const sendToken = require('../utils/jwtTokens'); // importing the sendToken func
 const sendEmail = require('../utils/sendEmail.js'); // importing the sendEmail function to send the password reset email to the user
 const crypto = require('crypto'); // for hashing the token incoming via reset password link clicked by the user
 const { findOne, findById } = require('../models/userModel');
+const Product = require('../models/productModel'); // importing the product model
 
 // Register a user
 exports.registerUser = catchAsyncErrors( async (req, res, next) => {
