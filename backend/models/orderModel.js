@@ -1,5 +1,14 @@
 const mongoose = require("mongoose");
 
+
+
+// Remember that the order model is basically a model that will be generated for every order
+// that exists out there. Thus, an order document will be made for every user that exists
+// and it will become live as soon as a user places their own order
+
+
+
+
 const orderSchema = new mongoose.Schema({
     shippingInfo: {
         address: { type: String, required: true },
